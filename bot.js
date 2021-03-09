@@ -157,3 +157,8 @@ bot.onText(new RegExp('/getusers.*'), message => {
 	const chatId = message.chat.id;
 	bot.sendMessage(chatId, JSON.stringify(users));
 });
+
+bot.onText(new RegExp('/getwebhook.*'), message => {
+	const chatId = message.chat.id;
+	bot.getWebHookInfo();
+});
