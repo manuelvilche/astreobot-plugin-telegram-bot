@@ -94,6 +94,8 @@ const setUrl = (chatId, path, question = 'Cual es la url del bot?', ask = false)
 
 bot.onText(new RegExp('/sendstats.*'), message => {
 
+	console.log('entro al /sendstats:', sendstats);
+
 	const chatId = message.chat.id;
 	const url = (users && users[chatId] && users[chatId].url) || false;
 
@@ -105,6 +107,8 @@ bot.onText(new RegExp('/sendstats.*'), message => {
 
 bot.onText(new RegExp('/sendopentransactions.*'), message => {
 
+	console.log('entro al /sendopentransactions:', sendopentransactions);
+
 	const chatId = message.chat.id;
 	const url = (users && users[chatId] && users[chatId].url) || false;
 
@@ -115,6 +119,8 @@ bot.onText(new RegExp('/sendopentransactions.*'), message => {
 });
 
 bot.onText(new RegExp('/seturl.*'), message => {
+
+	console.log('entro al /seturl:', seturl);
 
 	const chatId = message.chat.id;
 	const url = (users && users[chatId] && users[chatId].url) || false;
@@ -144,6 +150,8 @@ bot.onText(new RegExp('/seturl.*'), message => {
 
 bot.onText(new RegExp('/setcronminutes.*'), message => {
 
+	console.log('entro al /setcronminutes:', setcronminutes);
+
 	const chatId = message.chat.id;
 	const url = (users && users[chatId] && users[chatId].url) || false;
 
@@ -154,11 +162,15 @@ bot.onText(new RegExp('/setcronminutes.*'), message => {
 });
 
 bot.onText(new RegExp('/getusers.*'), message => {
+
+	console.log('entro al /getusers:', getusers);
 	const chatId = message.chat.id;
 	bot.sendMessage(chatId, JSON.stringify(users));
 });
 
 bot.onText(new RegExp('/getwebhook.*'), message => {
+
+	console.log('entro al /getwebhook:', getwebhook);
 	const chatId = message.chat.id;
 	bot.getWebHookInfo();
 });
