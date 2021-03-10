@@ -70,11 +70,11 @@ bot.on('message', message => {
 	}
 });
 
-const makeRequest = async (url, path, chatId, body = {}) => {
+const makeRequest = async (url, path, chatId, body = false) => {
 
 	const method = body ? 'post' : 'get';
 
-	axios[method](`${url}/plugin/api/${path}`, body)
+	axios[method](`${url}/plugin/api/${path}`, body || {})
 		.catch(err => {
 			bot.sendMessage(chatId, 'Error al enviar el mensaje');
 			bot.sendMessage(chatId, JSON.stringify(err));
@@ -103,7 +103,8 @@ const setUrl = (chatId, path, question = 'Cual es la url del bot?', ask = false)
 
 			const { text: botUrl, chat, from } = answer;
 
-			const url = botUrl.lastIndexOf('/') !== -1 ? botUrl.substring(0, botUrl.lastIndexOf('/')) : botUrl;
+			// const url = botUrl.lastIndexOf('/') !== -1 ? botUrl.substring(0, botUrl.lastIndexOf('/')) : botUrl;
+			const url = botUrl;
 			console.log('url:', url);
 			users[chatId] = {
 				url,
