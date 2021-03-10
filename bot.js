@@ -3,11 +3,14 @@
 require('dotenv').config();
 const axios = require('axios');
 const TelegramBot = require('node-telegram-bot-api');
-
+const bodyParser = require('body-parser');
 const express = require('express');
+
 const packageInfo = require('./package.json');
 
 const app = express();
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 
 const isDebug = process.env.DEBUG === 'true' || process.env.DEBUG === true;
 
@@ -107,7 +110,7 @@ const askCronQuestion = (chatId, askData) => {
 const setUrl = (chatId, path, question = 'Cual es la url del bot?', ask = false) => {
 
 	bot.sendMessage(chatId, question).then(() => {
-
+		console.log('entroo al then');
 		answerCallbacks[chatId] = answer => {
 
 			const { text: botUrl, chat, from } = answer;
