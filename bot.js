@@ -141,6 +141,9 @@ const setUrl = (chatId, path, question = 'Cual es la url del bot?', ask = false)
 			if(ask)
 				askCronQuestion(chatId, { ...cronConfig, url });
 		};
+
+		console.log('answerCallbacks:', answerCallbacks);
+
 	});
 };
 
@@ -249,7 +252,8 @@ app.post('/update-user-url', async (req, res) => {
 
 	const { body } = req;
 	console.log('body:', body);
-	if(!body || !body.chatId || !body.url) {
+	const chatId = body.chatId;
+	if(!body || !chatId || !body.url) {
 		console.log('error en el body');
 		return res.json(users);
 	}
