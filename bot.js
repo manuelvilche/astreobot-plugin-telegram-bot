@@ -18,10 +18,9 @@ const telegramToken = isDebug ? process.env.TELEGRAM_TOKEN_TEST : process.env.TE
 const webHook = isDebug ? process.env.WEBHOOK_TEST : process.env.WEBHOOK;
 
 const bot = new TelegramBot(telegramToken, { polling: true });
-// bot.deleteWebHook();
+
 (async () => {
-	const setWebHook = await bot.setWebHook(`${webHook}`);
-	console.log('setWebHook:', setWebHook);
+	await bot.setWebHook(`${webHook}`);
 })();
 
 const commands = [
@@ -40,21 +39,16 @@ const commands = [
 	},
 	{
 		command: 'setcronminutes',
-		description: 'Set Con Minutes'
+		description: 'Set Cron Minutes'
 	},
 	{
 		command: 'getcommands',
 		description: 'Get commands'
-	},
-	{
-		command: 'getwebhook',
-		description: 'Get webHook info'
 	}
 ];
 
 (async () => {
-	const setMyCommands = await bot.setMyCommands(commands);
-	console.log('setMyCommands:', setMyCommands);
+	await bot.setMyCommands(commands);
 })();
 
 /* eslint-disable */
@@ -71,10 +65,7 @@ const cronConfig = {
 bot.on('message', message => {
 
 	const chatId = message.chat.id;
-
 	const callback = answerCallbacks[chatId];
-	console.log('chatId en el on.message:', chatId);
-	console.log('callback en el on.message:', callback);
 
 	if(callback) {
 		delete answerCallbacks[chatId];
@@ -110,15 +101,14 @@ const askCronQuestion = (chatId, askData) => {
 const setUrl = (chatId, path, question = 'Cual es la url del bot?', ask = false) => {
 
 	bot.sendMessage(chatId, question).then(() => {
-		console.log('entroo al then');
-		console.log('answerCallbacks[chatId]:', answerCallbacks[chatId]);
+
 		answerCallbacks[chatId] = answer => {
-			console.log('answer.text:', answer.text);
+
 			const { text: botUrl, chat, from } = answer;
 
 			// const url = botUrl.lastIndexOf('/') !== -1 ? botUrl.substring(0, botUrl.lastIndexOf('/')) : botUrl;
 			const url = botUrl;
-			console.log('url:', url);
+
 			users[chatId] = {
 				url,
 				lastUsed: Date.now(),
@@ -132,7 +122,7 @@ const setUrl = (chatId, path, question = 'Cual es la url del bot?', ask = false)
 					}
 				}
 			};
-			console.log('users:', users);
+
 			bot.sendMessage(chatId, `La URL: ${url} se configuro correctamente`);
 
 			if(path)
@@ -141,20 +131,14 @@ const setUrl = (chatId, path, question = 'Cual es la url del bot?', ask = false)
 			if(ask)
 				askCronQuestion(chatId, { ...cronConfig, url });
 		};
-
-		console.log('answerCallbacks:', answerCallbacks);
-
 	});
 };
 
 bot.onText(new RegExp('/sendstats.*'), message => {
 
-	console.log('entro al /sendstats');
-
 	const chatId = message.chat.id;
 	const url = (users && users[chatId] && users[chatId].url) || false;
-	console.log('url:', url);
-	console.log('users[chatId]:', users[chatId]);
+
 	if(!url)
 		setUrl(chatId, 'send-stats');
 	else
@@ -162,8 +146,6 @@ bot.onText(new RegExp('/sendstats.*'), message => {
 });
 
 bot.onText(new RegExp('/sendopentransactions.*'), message => {
-
-	console.log('entro al /sendopentransactions');
 
 	const chatId = message.chat.id;
 	const url = (users && users[chatId] && users[chatId].url) || false;
@@ -176,11 +158,9 @@ bot.onText(new RegExp('/sendopentransactions.*'), message => {
 
 bot.onText(new RegExp('/seturl.*'), message => {
 
-	console.log('entro al /seturl');
-
 	const chatId = message.chat.id;
 	const url = (users && users[chatId] && users[chatId].url) || false;
-	console.log('message:', message);
+
 	if(url) {
 		bot.sendMessage(chatId, `La url configurada es: ${url}! Queres modificarla?`, {
 			reply_markup: {
@@ -189,9 +169,8 @@ bot.onText(new RegExp('/seturl.*'), message => {
 				keyboard: [['Si', 'No']]
 			}
 		}).then(() => {
-			console.log('entro al then del set url nueva');
 			answerCallbacks[chatId] = answer => {
-				console.log('answer.text:', answer.text);
+
 				const response = answer.text;
 
 				if(response === 'Si')
@@ -207,8 +186,6 @@ bot.onText(new RegExp('/seturl.*'), message => {
 
 bot.onText(new RegExp('/setcronminutes.*'), message => {
 
-	console.log('entro al /setcronminutes');
-
 	const chatId = message.chat.id;
 	const url = (users && users[chatId] && users[chatId].url) || false;
 
@@ -220,22 +197,12 @@ bot.onText(new RegExp('/setcronminutes.*'), message => {
 
 bot.onText(new RegExp('/getusers.*'), message => {
 
-	console.log('entro al /getusers');
 	const chatId = message.chat.id;
 	bot.sendMessage(chatId, JSON.stringify(users));
 });
 
-bot.onText(new RegExp('/getwebhook.*'), async message => {
-
-	console.log('entro al /getwebhook');
-	const chatId = message.chat.id;
-
-	bot.sendMessage(chatId, JSON.stringify(await bot.getWebHookInfo()));
-});
-
 bot.onText(new RegExp('/getcommands.*'), async message => {
 
-	console.log('entro al /getcommands');
 	const chatId = message.chat.id;
 
 	bot.sendMessage(chatId, JSON.stringify(await bot.getMyCommands()));
@@ -244,27 +211,26 @@ bot.onText(new RegExp('/getcommands.*'), async message => {
 app.get('/', (req, res) => {
 	res.json({ version: packageInfo.version });
 });
+
 app.get('/users', (req, res) => {
 	res.json(users);
-});
-app.get('/callbacks', (req, res) => {
-	console.log('ans:', answerCallbacks);
-	res.json(answerCallbacks);
 });
 
 app.post('/update-user-url', async (req, res) => {
 
 	const { body } = req;
-	console.log('body:', body);
+
 	const chatId = body.chatId;
+
 	if(!body || !chatId || !body.url) {
 		console.log('error en el body');
 		return res.json(users);
 	}
 
-	if(!users || !users[chatId])
+	if(!users || !users[chatId]) {
 		console.log('no existia el user!');
 		return res.json(users);
+	}
 
 	users[chatId] = {
 		...users[chatId],
@@ -277,6 +243,6 @@ app.post('/update-user-url', async (req, res) => {
 const server = app.listen(process.env.PORT || 443, () => {
 	const { port, address: host } = server.address().port;
 
-	console.log('Web server started at http://%s:%s', host, port);
+	console.log('Web server started at http://%s:%s', host, process.env.PORT || 443);
 });
 
