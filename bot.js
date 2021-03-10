@@ -20,7 +20,7 @@ const webHook = isDebug ? process.env.WEBHOOK_TEST : process.env.WEBHOOK;
 const bot = new TelegramBot(telegramToken, { polling: true });
 // bot.deleteWebHook();
 (async () => {
-	const setWebHook = await bot.setWebHook(`${webHook}/bot${telegramToken}`);
+	const setWebHook = await bot.setWebHook(`${webHook}`);
 	console.log('setWebHook:', setWebHook);
 })();
 
@@ -111,8 +111,9 @@ const setUrl = (chatId, path, question = 'Cual es la url del bot?', ask = false)
 
 	bot.sendMessage(chatId, question).then(() => {
 		console.log('entroo al then');
+		console.log('answerCallbacks[chatId]:', answerCallbacks[chatId]);
 		answerCallbacks[chatId] = answer => {
-
+			console.log('answer.text:', answer.text);
 			const { text: botUrl, chat, from } = answer;
 
 			// const url = botUrl.lastIndexOf('/') !== -1 ? botUrl.substring(0, botUrl.lastIndexOf('/')) : botUrl;
@@ -185,8 +186,9 @@ bot.onText(new RegExp('/seturl.*'), message => {
 				keyboard: [['Si', 'No']]
 			}
 		}).then(() => {
+			console.log('entro al then del set url nueva');
 			answerCallbacks[chatId] = answer => {
-
+				console.log('answer.text:', answer.text);
 				const response = answer.text;
 
 				if(response === 'Si')
@@ -246,7 +248,7 @@ app.get('/users', (req, res) => {
 app.post('/update-user-url', async (req, res) => {
 
 	const { body } = req;
-
+	console.log('body:', body);
 	if(!body || body.chatId || !body.url) {
 		console.log('error en el body');
 		return res.json(users);
