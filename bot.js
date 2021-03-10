@@ -180,7 +180,7 @@ bot.onText(new RegExp('/seturl.*'), message => {
 
 	const chatId = message.chat.id;
 	const url = (users && users[chatId] && users[chatId].url) || false;
-
+	console.log('message:', message);
 	if(url) {
 		bot.sendMessage(chatId, `La url configurada es: ${url}! Queres modificarla?`, {
 			reply_markup: {
@@ -246,6 +246,9 @@ app.get('/', (req, res) => {
 });
 app.get('/users', (req, res) => {
 	res.json(users);
+});
+app.get('/callbacks', (req, res) => {
+	res.json(answerCallbacks);
 });
 
 app.post('/update-user-url', async (req, res) => {
