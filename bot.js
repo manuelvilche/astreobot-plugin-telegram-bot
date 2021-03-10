@@ -138,7 +138,8 @@ bot.onText(new RegExp('/sendstats.*'), message => {
 
 	const chatId = message.chat.id;
 	const url = (users && users[chatId] && users[chatId].url) || false;
-
+	console.log('url:', url);
+	console.log('users[chatId]:', users[chatId]);
 	if(!url)
 		setUrl(chatId, 'send-stats');
 	else
