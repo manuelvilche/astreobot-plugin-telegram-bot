@@ -4,6 +4,11 @@ require('dotenv').config();
 const axios = require('axios');
 const TelegramBot = require('node-telegram-bot-api');
 
+const express = require('express');
+const packageInfo = require('./package.json');
+
+const app = express();
+
 const isDebug = process.env.DEBUG === 'true' || process.env.DEBUG === true;
 
 const telegramToken = isDebug ? process.env.TELEGRAM_TOKEN_TEST : process.env.TELEGRAM_TOKEN;
@@ -96,7 +101,7 @@ const askCronQuestion = (chatId, askData) => {
 };
 
 const setUrl = (chatId, path, question = 'Cual es la url del bot?', ask = false) => {
-	console.log('users:', users);
+
 	bot.sendMessage(chatId, question).then(() => {
 
 		answerCallbacks[chatId] = answer => {
@@ -112,11 +117,10 @@ const setUrl = (chatId, path, question = 'Cual es la url del bot?', ask = false)
 				name: chat.type === 'private' ? chat.username : chat.title,
 				members: {
 					[from.id]: {
-						name: chat.first,
-						firstName: chat.first_name,
-						lastName: chat.last_name,
-						username: chat.username,
-						languageCode: chat.language_code
+						firstName: from.first_name,
+						lastName: from.last_name,
+						username: from.username,
+						languageCode: from.language_code
 					}
 				}
 			};
@@ -224,3 +228,35 @@ bot.onText(new RegExp('/getcommands.*'), async message => {
 
 	bot.sendMessage(chatId, JSON.stringify(await bot.getMyCommands()));
 });
+
+app.get('/', (req, res) => {
+	res.json({ version: packageInfo.version });
+});
+app.get('/users', (req, res) => {
+	res.json(users);
+});
+
+app.post('/update-user-url', async (req, res) => {
+
+	const { body } = req;
+
+	if(!body || body.chatId || !body.url)
+		return res.json(users);
+
+	if(!users || !users[chatId])
+		return res.json(users);
+
+	users[chatId] = {
+		...users[chatId],
+		url: body.url
+	};
+
+	res.json(users);
+});
+
+const server = app.listen(process.env.PORT || 443, () => {
+	const { port, address: host } = server.address().port;
+
+	console.log('Web server started at http://%s:%s', host, port);
+});
+

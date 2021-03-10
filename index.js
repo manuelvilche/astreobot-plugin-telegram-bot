@@ -1,4 +1,4 @@
 'use strict';
 
 require('./bot');
-require('./web');
+// require('./web');
