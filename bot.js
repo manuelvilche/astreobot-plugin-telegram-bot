@@ -244,10 +244,13 @@ app.post('/update-user-url', async (req, res) => {
 
 	const { body } = req;
 
-	if(!body || body.chatId || !body.url)
+	if(!body || body.chatId || !body.url) {
+		console.log('error en el body');
 		return res.json(users);
+	}
 
 	if(!users || !users[chatId])
+		console.log('no existia el user!');
 		return res.json(users);
 
 	users[chatId] = {
