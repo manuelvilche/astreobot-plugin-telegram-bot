@@ -10,7 +10,45 @@ const telegramToken = isDebug ? process.env.TELEGRAM_TOKEN_TEST : process.env.TE
 const webHook = isDebug ? process.env.WEBHOOK_TEST : process.env.WEBHOOK;
 
 const bot = new TelegramBot(telegramToken, { polling: true });
-bot.setWebHook(webHook);
+// bot.deleteWebHook();
+(async () => {
+	const setWebHook = await bot.setWebHook(`${webHook}/bot${telegramToken}`);
+	console.log('setWebHook:', setWebHook);
+})();
+
+const commands = [
+
+	{
+		command: 'sendstats',
+		description: 'Send Plugin Stats'
+	},
+	{
+		command: 'sendopentransactions',
+		description: 'Send Open Transactions'
+	},
+	{
+		command: 'seturl',
+		description: 'Set AstreoBot URL'
+	},
+	{
+		command: 'setcronminutes',
+		description: 'Set Con Minutes'
+	},
+	{
+		command: 'getcommands',
+		description: 'Get commands'
+	},
+	{
+		command: 'getwebhook',
+		description: 'Get webHook info'
+	}
+];
+
+(async () => {
+	const setMyCommands = await bot.setMyCommands(commands);
+	console.log('setMyCommands:', setMyCommands);
+})();
+
 /* eslint-disable */
 bot.on('polling_error', console.log);
 
@@ -94,7 +132,7 @@ const setUrl = (chatId, path, question = 'Cual es la url del bot?', ask = false)
 
 bot.onText(new RegExp('/sendstats.*'), message => {
 
-	console.log('entro al /sendstats:', sendstats);
+	console.log('entro al /sendstats');
 
 	const chatId = message.chat.id;
 	const url = (users && users[chatId] && users[chatId].url) || false;
@@ -107,7 +145,7 @@ bot.onText(new RegExp('/sendstats.*'), message => {
 
 bot.onText(new RegExp('/sendopentransactions.*'), message => {
 
-	console.log('entro al /sendopentransactions:', sendopentransactions);
+	console.log('entro al /sendopentransactions');
 
 	const chatId = message.chat.id;
 	const url = (users && users[chatId] && users[chatId].url) || false;
@@ -120,7 +158,7 @@ bot.onText(new RegExp('/sendopentransactions.*'), message => {
 
 bot.onText(new RegExp('/seturl.*'), message => {
 
-	console.log('entro al /seturl:', seturl);
+	console.log('entro al /seturl');
 
 	const chatId = message.chat.id;
 	const url = (users && users[chatId] && users[chatId].url) || false;
@@ -150,7 +188,7 @@ bot.onText(new RegExp('/seturl.*'), message => {
 
 bot.onText(new RegExp('/setcronminutes.*'), message => {
 
-	console.log('entro al /setcronminutes:', setcronminutes);
+	console.log('entro al /setcronminutes');
 
 	const chatId = message.chat.id;
 	const url = (users && users[chatId] && users[chatId].url) || false;
@@ -163,14 +201,23 @@ bot.onText(new RegExp('/setcronminutes.*'), message => {
 
 bot.onText(new RegExp('/getusers.*'), message => {
 
-	console.log('entro al /getusers:', getusers);
+	console.log('entro al /getusers');
 	const chatId = message.chat.id;
 	bot.sendMessage(chatId, JSON.stringify(users));
 });
 
-bot.onText(new RegExp('/getwebhook.*'), message => {
+bot.onText(new RegExp('/getwebhook.*'), async message => {
 
-	console.log('entro al /getwebhook:', getwebhook);
+	console.log('entro al /getwebhook');
 	const chatId = message.chat.id;
-	bot.getWebHookInfo();
+
+	bot.sendMessage(chatId, JSON.stringify(await bot.getWebHookInfo()));
+});
+
+bot.onText(new RegExp('/getcommands.*'), async message => {
+
+	console.log('entro al /getcommands');
+	const chatId = message.chat.id;
+
+	bot.sendMessage(chatId, JSON.stringify(await bot.getMyCommands()));
 });
