@@ -67,10 +67,14 @@ const cronConfig = {
 
 bot.on('message', message => {
 
-	const callback = answerCallbacks[message.chat.id];
+	const chatId = message.chat.id;
+
+	const callback = answerCallbacks[chatId];
+
+	console.log('callback:', callback);
 
 	if(callback) {
-		delete answerCallbacks[message.chat.id];
+		delete answerCallbacks[chatId];
 		return callback(message);
 	}
 });
