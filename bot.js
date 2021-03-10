@@ -96,6 +96,7 @@ const askCronQuestion = (chatId, askData) => {
 };
 
 const setUrl = (chatId, path, question = 'Cual es la url del bot?', ask = false) => {
+	console.log('users:', users);
 	bot.sendMessage(chatId, question).then(() => {
 
 		answerCallbacks[chatId] = answer => {
@@ -103,7 +104,7 @@ const setUrl = (chatId, path, question = 'Cual es la url del bot?', ask = false)
 			const { text: botUrl, chat, from } = answer;
 
 			const url = botUrl.lastIndexOf('/') !== -1 ? botUrl.substring(0, botUrl.lastIndexOf('/')) : botUrl;
-
+			console.log('url:', url);
 			users[chatId] = {
 				url,
 				lastUsed: Date.now(),
@@ -118,7 +119,7 @@ const setUrl = (chatId, path, question = 'Cual es la url del bot?', ask = false)
 					}
 				}
 			};
-
+			console.log('users:', users);
 			bot.sendMessage(chatId, `La URL: ${url} se configuro correctamente`);
 
 			if(path)
