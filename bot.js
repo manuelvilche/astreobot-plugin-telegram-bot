@@ -73,8 +73,8 @@ bot.on('message', message => {
 	const chatId = message.chat.id;
 
 	const callback = answerCallbacks[chatId];
-
-	console.log('callback:', callback);
+	console.log('chatId en el on.message:', chatId);
+	console.log('callback en el on.message:', callback);
 
 	if(callback) {
 		delete answerCallbacks[chatId];
@@ -248,6 +248,7 @@ app.get('/users', (req, res) => {
 	res.json(users);
 });
 app.get('/callbacks', (req, res) => {
+	console.log('ans:', answerCallbacks);
 	res.json(answerCallbacks);
 });
 
