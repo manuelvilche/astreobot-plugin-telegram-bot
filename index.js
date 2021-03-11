@@ -266,9 +266,10 @@ app.post('/update-user-url', async (req, res) => {
 	res.json(findUser());
 });
 
-const server = app.listen(process.env.WEB_PORT || 443, () => {
-	const { port, address: host } = server.address().port;
+const webPort = process.env.WEB_PORT || 443;
 
-	console.log('Web server started at http://%s:%s', host, process.env.PORT || 443);
+const server = app.listen(webPort, () => {
+	const { port, address: host } = server.address();
+	console.log('Web server started at http://%s:%s', host, webPort);
 });
 
