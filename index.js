@@ -266,8 +266,7 @@ app.post('/update-user-url', async (req, res) => {
 	res.json(findUser());
 });
 
-const webPort = process.env.WEB_PORT || 443;
-
-console.log(`Express app listen port: ${webPort}`);
-
-app.listen(webPort);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Our app is running on port ${PORT}`);
+});
