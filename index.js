@@ -125,7 +125,7 @@ const processRequest = async (path, message) => {
 	if(!user && !user.url)
 		await setUrl(chatId, path, false, { reply_to_message_id: message.message_id });
 	else
-		makeRequest(user.urlurl, path, chatId);
+		makeRequest(user.url, path, chatId);
 }
 
 const updateUrl = async (id, url) => {
@@ -268,8 +268,6 @@ app.post('/update-user-url', async (req, res) => {
 
 const webPort = process.env.WEB_PORT || 443;
 
-const server = app.listen(webPort, () => {
-	const { port, address: host } = server.address();
-	console.log('Web server started at http://%s:%s', host, webPort);
-});
+console.log(`Express app listen port: ${webPort}`);
 
+app.listen(webPort);
