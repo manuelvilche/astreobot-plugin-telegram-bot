@@ -5,8 +5,23 @@ const axios = require('axios');
 const TelegramBot = require('node-telegram-bot-api');
 const bodyParser = require('body-parser');
 const express = require('express');
+const mongoose = require('mongoose');
 
 const packageInfo = require('./package.json');
+
+mongoose.connect(process.env.MONGO_URL, {
+	useUnifiedTopology: true,
+	useNewUrlParser: true,
+	useCreateIndex: true
+});
+
+const UserModel = mongoose.model('user', {
+	chatId: { type: String },
+	url: { type: String },
+	lastUsed: { type: Date },
+	name: { type: String },
+	members: { type: Object }
+});
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -19,12 +34,7 @@ const webHook = isDebug ? process.env.WEBHOOK_TEST : process.env.WEBHOOK;
 
 const bot = new TelegramBot(telegramToken, { polling: true });
 
-(async () => {
-	await bot.setWebHook(`${webHook}`);
-})();
-
 const commands = [
-
 	{
 		command: 'sendstats',
 		description: 'Send Plugin Stats'
@@ -48,6 +58,7 @@ const commands = [
 ];
 
 (async () => {
+	await bot.setWebHook(`${webHook}`);
 	await bot.setMyCommands(commands);
 })();
 
@@ -55,7 +66,6 @@ const commands = [
 bot.on('polling_error', console.log);
 
 const answerCallbacks = {};
-const users = {};
 
 const cronConfig = {
 	question: 'Cada cuantos minutos queres que corra el cron?',
@@ -98,18 +108,47 @@ const askCronQuestion = (chatId, askData) => {
 	});
 };
 
-const setUrl = (chatId, path, question = 'Cual es la url del bot?', ask = false) => {
+const findUser = async chatId => {
 
-	bot.sendMessage(chatId, question).then(() => {
+	const queryParams = chatId ? { chatId } : {}
 
-		answerCallbacks[chatId] = answer => {
+	const userFounded = await UserModel.find(queryParams);
+
+	return chatId ? [userFounded] : userFounded;
+}
+
+const processRequest = async (path, message) => {
+
+	const chatId = message.chat.id;
+	const user = findUser(chatId);
+
+	if(!user && !user.url)
+		await setUrl(chatId, path, false, { reply_to_message_id: message.message_id });
+	else
+		makeRequest(user.urlurl, path, chatId);
+}
+
+const updateUrl = async (id, url) => {
+	return UserModel.updateOne({ _id: id }, { url: url}, (err, result) => {
+		if(err)
+			console.error(err);
+		else
+			console.log('se guardo correctamente el update!');
+	});
+}
+
+const setUrl = async (chatId, path, question = 'Cual es la url del bot?', ask = false, options) => {
+
+	bot.sendMessage(chatId, question, options || {}).then(() => {
+
+		answerCallbacks[chatId] = async answer => {
 
 			const { text: botUrl, chat, from } = answer;
 
-			// const url = botUrl.lastIndexOf('/') !== -1 ? botUrl.substring(0, botUrl.lastIndexOf('/')) : botUrl;
-			const url = botUrl;
+			const url = botUrl.slice(-1) === '/' ? botUrl.substring(0, (botUrl.length - 1)) : botUrl;
 
-			users[chatId] = {
+			const userToSave = {
+				chatId,
 				url,
 				lastUsed: Date.now(),
 				name: chat.type === 'private' ? chat.username : chat.title,
@@ -121,9 +160,23 @@ const setUrl = (chatId, path, question = 'Cual es la url del bot?', ask = false)
 						languageCode: from.language_code
 					}
 				}
-			};
+			}
 
-			bot.sendMessage(chatId, `La URL: ${url} se configuro correctamente`);
+			const [userFounded] = await UserModel.find({ chatId });
+
+			if(userFounded)
+				await updateUrl(userFounded._id, botUrl);
+			else {
+				await UserModel.create(userToSave, (err, result) => {
+
+					if(err)
+						console.error(err);
+					else
+						console.log('se guardo correctamente!');
+				});
+			}
+
+			bot.sendMessage(chatId, `La URL: ${url} se configuro correctamente`, { reply_to_message_id: answer.message_id});
 
 			if(path)
 				makeRequest(url, path, chatId);
@@ -134,77 +187,58 @@ const setUrl = (chatId, path, question = 'Cual es la url del bot?', ask = false)
 	});
 };
 
-bot.onText(new RegExp('/sendstats.*'), message => {
-
-	const chatId = message.chat.id;
-	const url = (users && users[chatId] && users[chatId].url) || false;
-
-	if(!url)
-		setUrl(chatId, 'send-stats');
-	else
-		makeRequest(url, 'send-stats', chatId);
+bot.onText(new RegExp('/sendstats.*'), async message => {
+	processRequest('send-stats', message);
 });
 
-bot.onText(new RegExp('/sendopentransactions.*'), message => {
-
-	const chatId = message.chat.id;
-	const url = (users && users[chatId] && users[chatId].url) || false;
-
-	if(!url)
-		setUrl(chatId, 'send-transactions');
-	else
-		makeRequest(url, 'send-transactions', chatId);
+bot.onText(new RegExp('/sendopentransactions.*'), async message => {
+	processRequest('send-transactions', message);
 });
 
-bot.onText(new RegExp('/seturl.*'), message => {
+bot.onText(new RegExp('/seturl.*'), async message => {
 
 	const chatId = message.chat.id;
-	const url = (users && users[chatId] && users[chatId].url) || false;
+	const user = findUser(chatId);
 
-	if(url) {
-		bot.sendMessage(chatId, `La url configurada es: ${url}! Queres modificarla?`, {
+	const [userFounded] = await UserModel.find({ chatId });
+
+	if(userFounded) {
+		bot.sendMessage(chatId, `La url configurada es: ${userFounded.url}! Queres modificarla?`, {
 			reply_markup: {
 				resize_keyboard: true,
 				one_time_keyboard: true,
+				reply_to_message_id: message.message_id,
 				keyboard: [['Si', 'No']]
 			}
 		}).then(() => {
-			answerCallbacks[chatId] = answer => {
+			answerCallbacks[chatId] = async answer => {
 
 				const response = answer.text;
 
-				if(response === 'Si')
-					setUrl(chatId, null, 'Cual es la nueva url del bot?');
+				if(response.toLowerCase() === 'si')
+					await setUrl(chatId, null, 'Cual es la nueva url del bot?', false, { reply_to_message_id: answer.message_id });
 				else
 					bot.sendMessage(chatId, `Perfecto quedo la URL: ${url}`);
 			};
 		});
 
 	} else
-		setUrl(chatId);
+		await setUrl(chatId);
 });
 
-bot.onText(new RegExp('/setcronminutes.*'), message => {
+bot.onText(new RegExp('/setcronminutes.*'), async message => {
 
 	const chatId = message.chat.id;
-	const url = (users && users[chatId] && users[chatId].url) || false;
+	const user = findUser(chatId);
 
-	if(!url)
-		setUrl(chatId, 'set-cron-minutes');
+	if(!user && !user.url)
+		await setUrl(chatId, 'set-cron-minutes');
 	else
 		askCronQuestion(chatId, { ...cronConfig, url });
 });
 
-bot.onText(new RegExp('/getusers.*'), message => {
-
-	const chatId = message.chat.id;
-	bot.sendMessage(chatId, JSON.stringify(users));
-});
-
 bot.onText(new RegExp('/getcommands.*'), async message => {
-
 	const chatId = message.chat.id;
-
 	bot.sendMessage(chatId, JSON.stringify(await bot.getMyCommands()));
 });
 
@@ -212,35 +246,27 @@ app.get('/', (req, res) => {
 	res.json({ version: packageInfo.version });
 });
 
-app.get('/users', (req, res) => {
-	res.json(users);
+app.get('/users', async (req, res) => {
+	const usersFounded = await UserModel.find();
+	res.json(usersFounded);
 });
 
 app.post('/update-user-url', async (req, res) => {
 
 	const { body } = req;
 
-	const chatId = body.chatId;
+	const { chatId, url } = body;
 
-	if(!body || !chatId || !body.url) {
-		console.log('error en el body');
-		return res.json(users);
-	}
+	if(!chatId || !url)
+		return res.status(400).send('Invalid chatId or url');
 
-	if(!users || !users[chatId]) {
-		console.log('no existia el user!');
-		return res.json(users);
-	}
+	const [userFounded] = findUser(chatId);
+	updateUrl(userFounded._id, )
 
-	users[chatId] = {
-		...users[chatId],
-		url: body.url
-	};
-
-	res.json(users);
+	res.json(findUser());
 });
 
-const server = app.listen(process.env.PORT || 443, () => {
+const server = app.listen(process.env.WEB_PORT || 443, () => {
 	const { port, address: host } = server.address().port;
 
 	console.log('Web server started at http://%s:%s', host, process.env.PORT || 443);
