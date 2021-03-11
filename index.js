@@ -114,13 +114,13 @@ const findUser = async chatId => {
 
 	const userFounded = await UserModel.find(queryParams);
 
-	return chatId ? [userFounded] : userFounded;
+	return chatId ? userFounded[0] : userFounded;
 }
 
 const processRequest = async (path, message) => {
 
 	const chatId = message.chat.id;
-	const user = findUser(chatId);
+	const user = await findUser(chatId);
 
 	if(!user && !user.url)
 		await setUrl(chatId, path, false, { reply_to_message_id: message.message_id });
