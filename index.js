@@ -16,7 +16,7 @@ mongoose.connect(process.env.MONGO_URL, {
 });
 
 const UserModel = mongoose.model('user', {
-	chatId: { type: String },
+	chatId: { type: String, unique: true },
 	url: { type: String },
 	lastUsed: { type: Date },
 	name: { type: String },
