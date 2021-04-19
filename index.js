@@ -37,24 +37,32 @@ const bot = new TelegramBot(telegramToken, { polling: true });
 const commands = [
 	{
 		command: 'sendstats',
-		description: 'Send Plugin Stats'
+		description: 'Send Bot Stats'
 	},
 	{
 		command: 'sendopentransactions',
 		description: 'Send Open Transactions'
 	},
 	{
+		command: 'getsymbols',
+		description: 'Get all symbols'
+	},
+	{
 		command: 'seturl',
 		description: 'Set AstreoBot URL'
 	},
+	// {
+	// 	command: 'setcronminutes',
+	// 	description: 'Set Cron Minutes'
+	// },
 	{
-		command: 'setcronminutes',
-		description: 'Set Cron Minutes'
-	},
-	{
-		command: 'getcommands',
-		description: 'Get commands'
+		command: 'setstartday',
+		description: 'Set the totals start date'
 	}
+	// {
+	// 	command: 'getcommands',
+	// 	description: 'Get commands'
+	// }
 ];
 
 (async () => {
@@ -72,6 +80,8 @@ const cronConfig = {
 	path: 'set-cron-minutes'
 };
 
+const setUrlQuestionString = 'Cual es la url del bot?';
+
 bot.on('message', message => {
 
 	const chatId = message.chat.id;
@@ -83,7 +93,7 @@ bot.on('message', message => {
 	}
 });
 
-const makeRequest = async (url, path, chatId, body = false) => {
+const makeRequest = async (url, path, body = false) => {
 
 	const method = body ? 'post' : 'get';
 
@@ -94,15 +104,15 @@ const makeRequest = async (url, path, chatId, body = false) => {
 		});
 };
 
-const askCronQuestion = (chatId, askData) => {
-	bot.sendMessage(chatId, askData.question).then(() => {
+const askNewQuestion = (chatId, askData) => {
+	bot.sendMessage(chatId, askData.question, askData.options || {}).then(() => {
 
 		answerCallbacks[chatId] = answer => {
 
 			const { text: minutes } = answer;
 
 			if(askData.path)
-				makeRequest(askData.url, askData.path, chatId, { minutes });
+				makeRequest(askData.url, askData.path, { minutes });
 
 		};
 	});
@@ -125,7 +135,7 @@ const processRequest = async (path, message) => {
 	if(!user && !user.url)
 		await setUrl(chatId, path, false, { reply_to_message_id: message.message_id });
 	else
-		makeRequest(user.url, path, chatId);
+		makeRequest(user.url, path);
 }
 
 const updateUrl = async (id, url) => {
@@ -137,7 +147,7 @@ const updateUrl = async (id, url) => {
 	});
 }
 
-const setUrl = async (chatId, path, question = 'Cual es la url del bot?', ask = false, options) => {
+const setUrl = async (chatId, path, question = 'Cual es la url del bot?', shouldToAskNewQuestion = false, options) => {
 
 	bot.sendMessage(chatId, question, options || {}).then(() => {
 
@@ -179,10 +189,10 @@ const setUrl = async (chatId, path, question = 'Cual es la url del bot?', ask = 
 			bot.sendMessage(chatId, `La URL: ${url} se configuro correctamente`, { reply_to_message_id: answer.message_id});
 
 			if(path)
-				makeRequest(url, path, chatId);
+				makeRequest(url, path);
 
-			if(ask)
-				askCronQuestion(chatId, { ...cronConfig, url });
+			if(shouldToAskNewQuestion)
+				askNewQuestion(chatId, { ...cronConfig, url, options: { reply_to_message_id: answer.message_id } });
 		};
 	});
 };
@@ -193,6 +203,10 @@ bot.onText(new RegExp('/sendstats.*'), async message => {
 
 bot.onText(new RegExp('/sendopentransactions.*'), async message => {
 	processRequest('send-transactions', message);
+});
+
+bot.onText(new RegExp('/sendsymbols.*'), async message => {
+	processRequest('send-symbols', message);
 });
 
 bot.onText(new RegExp('/seturl.*'), async message => {
@@ -218,12 +232,12 @@ bot.onText(new RegExp('/seturl.*'), async message => {
 				if(response.toLowerCase() === 'si')
 					await setUrl(chatId, null, 'Cual es la nueva url del bot?', false, { reply_to_message_id: answer.message_id });
 				else
-					bot.sendMessage(chatId, `Perfecto quedo la URL: ${url}`);
+					bot.sendMessage(chatId, `Perfecto quedo la URL: ${url}`, { reply_to_message_id: answer.message_id });
 			};
 		});
 
 	} else
-		await setUrl(chatId);
+		await setUrl(chatId, false, setUrlQuestionString, false, { reply_to_message_id: answer.message_id });
 });
 
 bot.onText(new RegExp('/setcronminutes.*'), async message => {
@@ -232,9 +246,25 @@ bot.onText(new RegExp('/setcronminutes.*'), async message => {
 	const user = findUser(chatId);
 
 	if(!user && !user.url)
-		await setUrl(chatId, 'set-cron-minutes');
+		await setUrl(chatId, 'set-cron-minutes', setUrlQuestionString, false, { reply_to_message_id: message.message_id });
 	else
-		askCronQuestion(chatId, { ...cronConfig, url });
+		askNewQuestion(chatId, { ...cronConfig, url, options: { reply_to_message_id: message.message_id }  });
+});
+
+bot.onText(new RegExp('/setstartday.*'), async message => {
+
+	const chatId = message.chat.id;
+	const user = findUser(chatId);
+
+	if(!user && !user.url)
+		await setUrl(chatId, 'set-start-day', setUrlQuestionString, false, { reply_to_message_id: message.message_id });
+	else
+		askNewQuestion(chatId, {
+			question: 'Cual queres que sea la fecha de inicio de los totales?',
+			path: 'set-start-day',
+			url,
+			options: { reply_to_message_id: message.message_id }
+		});
 });
 
 bot.onText(new RegExp('/getcommands.*'), async message => {
