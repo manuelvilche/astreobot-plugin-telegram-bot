@@ -44,7 +44,7 @@ const commands = [
 		description: 'Send Open Transactions'
 	},
 	{
-		command: 'getsymbols',
+		command: 'sendsymbols',
 		description: 'Get all symbols'
 	},
 	{
