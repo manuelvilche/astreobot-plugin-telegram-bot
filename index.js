@@ -51,10 +51,10 @@ const commands = [
 		command: 'balances',
 		description: 'Get all balances'
 	},
-	{
-		command: 'seturl',
-		description: 'Set AstreoBot URL'
-	},
+	// {
+	// 	command: 'seturl',
+	// 	description: 'Set AstreoBot URL'
+	// },
 	// {
 	// 	command: 'setcronminutes',
 	// 	description: 'Set Cron Minutes'
