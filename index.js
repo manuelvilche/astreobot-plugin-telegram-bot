@@ -36,16 +36,20 @@ const bot = new TelegramBot(telegramToken, { polling: true });
 
 const commands = [
 	{
-		command: 'sendstats',
+		command: 'stats',
 		description: 'Send Bot Stats'
 	},
 	{
-		command: 'sendopentransactions',
+		command: 'opentransactions',
 		description: 'Send Open Transactions'
 	},
 	{
-		command: 'sendsymbols',
+		command: 'symbols',
 		description: 'Get all symbols'
+	},
+	{
+		command: 'balances',
+		description: 'Get all balances'
 	},
 	{
 		command: 'seturl',
@@ -197,16 +201,20 @@ const setUrl = async (chatId, path, question = 'Cual es la url del bot?', should
 	});
 };
 
-bot.onText(new RegExp('/sendstats.*'), async message => {
+bot.onText(new RegExp('/stats.*'), async message => {
 	processRequest('send-stats', message);
 });
 
-bot.onText(new RegExp('/sendopentransactions.*'), async message => {
+bot.onText(new RegExp('/opentransactions.*'), async message => {
 	processRequest('send-transactions', message);
 });
 
-bot.onText(new RegExp('/sendsymbols.*'), async message => {
+bot.onText(new RegExp('/symbols.*'), async message => {
 	processRequest('send-symbols', message);
+});
+
+bot.onText(new RegExp('/balances.*'), async message => {
+	processRequest('send-balances', message);
 });
 
 bot.onText(new RegExp('/seturl.*'), async message => {
@@ -297,6 +305,7 @@ app.post('/update-user-url', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
     console.log(`Our app is running on port ${PORT}`);
 });
