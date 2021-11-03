@@ -97,7 +97,7 @@ bot.on('message', message => {
 	}
 });
 
-const makeRequest = async (url, path, body = false) => {
+const makeRequest = async (chatId, url, path, body = false) => {
 
 	const method = body ? 'post' : 'get';
 
@@ -116,7 +116,7 @@ const askNewQuestion = (chatId, askData) => {
 			const { text: minutes } = answer;
 
 			if(askData.path)
-				makeRequest(askData.url, askData.path, { minutes });
+				makeRequest(chatId, askData.url, askData.path, { minutes });
 
 		};
 	});
@@ -139,7 +139,7 @@ const processRequest = async (path, message) => {
 	if(!user && !user.url)
 		await setUrl(chatId, path, false, { reply_to_message_id: message.message_id });
 	else
-		makeRequest(user.url, path);
+		makeRequest(chatId, user.url, path);
 }
 
 const updateUrl = async (id, url) => {
@@ -193,7 +193,7 @@ const setUrl = async (chatId, path, question = 'Cual es la url del bot?', should
 			bot.sendMessage(chatId, `La URL: ${url} se configuro correctamente`, { reply_to_message_id: answer.message_id});
 
 			if(path)
-				makeRequest(url, path);
+				makeRequest(chatId, url, path);
 
 			if(shouldToAskNewQuestion)
 				askNewQuestion(chatId, { ...cronConfig, url, options: { reply_to_message_id: answer.message_id } });
