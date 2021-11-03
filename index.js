@@ -281,6 +281,7 @@ bot.onText(new RegExp('/getcommands.*'), async message => {
 });
 
 app.get('/', (req, res) => {
+	console.log('req:', req);
 	res.json({ version: packageInfo.version });
 });
 
